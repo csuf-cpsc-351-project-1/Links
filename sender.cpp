@@ -24,16 +24,24 @@ void* sharedMemPtr;
 
 void init(int& shmid, int& msqid, void*& sharedMemPtr)
 {
-	/* TODO: 
-        1. Create a file called keyfile.txt containing string "Hello world" (you may do
- 		    so manually or from the code).
-	    2. Use ftok("keyfile.txt", 'a') in order to generate the key.
-		3. Use the key in the TODO's below. Use the same key for the queue
-		    and the shared memory segment. This also serves to illustrate the difference
-		    between the key and the id used in message queues and shared memory. The id
-		    for any System V objest (i.e. message queues, shared memory, and sempahores) 
-		    is unique system-wide among all SYstem V objects. Two objects, on the other hand,
-		    may have the same key.
+	FILE * fp;
+	
+	fp = fopen("keyfile.txt", "w"); 	//Create a file named keyfile.txt, w means set to write.
+	fprintf(fp, "Hello world\n");
+	fclose (fp);
+
+    	if ((key = ftok("keyfile.txt", 'a')) == -1) {
+        	perror("ftok");
+        	exit(1);
+    	}
+		
+	/*
+	NOTE:	Use the key in the TODO's below. Use the same key for the queue
+	and the shared memory segment. This also serves to illustrate the difference
+	between the key and the id used in message queues and shared memory. The id
+	for any System V objest (i.e. message queues, shared memory, and sempahores) 
+	is unique system-wide among all SYstem V objects. Two objects, on the other hand,
+	may have the same key.
 	 */
 	
 
