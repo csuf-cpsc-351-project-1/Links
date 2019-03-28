@@ -1,5 +1,3 @@
-
-
 #include <sys/shm.h>
 #include <sys/msg.h>
 #include <stdio.h>
@@ -25,6 +23,7 @@ void* sharedMemPtr;
 void init(int& shmid, int& msqid, void*& sharedMemPtr)
 {
 	FILE * fp;
+	key_t key;
 	
 	fp = fopen("keyfile.txt", "w"); 	//Create a file named keyfile.txt, w means set to write.
 	fprintf(fp, "Hello world\n");
