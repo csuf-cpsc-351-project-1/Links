@@ -1,21 +1,3 @@
-
-
-#include <sys/shm.h>
-#include <sys/msg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include "msg.h"    /* For the message struct */
-
-/* The size of the shared memory chunk */
-#define SHARED_MEMORY_CHUNK_SIZE 1000
-
-/* The ids for the shared memory segment and the message queue */
-int shmid, msqid;
-
-/* The pointer to the shared memory */
-void* sharedMemPtr;
-
 /**
  * Sets up the shared memory segment and message queue
  * @param shmid - the id of the allocated shared memory 
