@@ -1,4 +1,3 @@
-
 #include <sys/shm.h>
 #include <sys/msg.h>
 #include <signal.h>
@@ -41,15 +40,29 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 		    is unique system-wide among all System V objects. Two objects, on the other hand,
 		    may have the same key.
 	 */
-	
+	ofstream outFile;
+	ofstream outFile.open("keyfile.txt");
+	outFile << "Hello world\n";
+	outFile.close();
 
+	key_t key;
+	key = ftok("keyfile.txt", 'a');
+	
 	
 	/* TODO: Allocate a piece of shared memory. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE. */
+	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, 0644 | IPC_CREAT); 
 	/* TODO: Attach to the shared memory */
+	sharedMemPtr = shmat(shmid, (void *)0, 0);
 	/* TODO: Create a message queue */
+	msqid = msgget (key, 0644 | IPC_CREAT);
 	/* Store the IDs and the pointer to the shared memory region in the corresponding parameters */
 	
 }
+
+
+
+// What the fuck is the garbage below?
+
  
 
 /**
@@ -58,7 +71,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 void mainLoop()
 {
 	/* The size of the mesage */
-	int msgSize = 0;
+	int msgSize = 1;
 	
 	/* Open the file for writing */
 	FILE* fp = fopen(recvFileName, "w");
@@ -83,10 +96,12 @@ void mainLoop()
 
 	/* Keep receiving until the sender set the size to 0, indicating that
  	 * there is no more data to send
- 	 */	
+ 	 */
 
 	while(msgSize != 0)
 	{	
+		msgrcv(msqid, &sharedMemPtr, sizeof(), SENDER_DATA_TYPE, 0);
+
 		/* If the sender is not telling us that we are done, then get to work */
 		if(msgSize != 0)
 		{
@@ -100,6 +115,7 @@ void mainLoop()
  			 * I.e. send a message of type RECV_DONE_TYPE (the value of size field
  			 * does not matter in this case). 
  			 */
+			msgsnd(msqid, *sharedMemPtr, 0, RECV_DONE_TYPE);
 		}
 		/* We are done */
 		else
@@ -122,10 +138,11 @@ void mainLoop()
 void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 {
 	/* TODO: Detach from shared memory */
-	
+	shmdt(sharedMemPtr);
 	/* TODO: Deallocate the shared memory chunk */
-	
+	shmctl(shmid, IPC_RMID, NULL);
 	/* TODO: Deallocate the message queue */
+	msgctl(msqid, IPC_RMID, NULL);
 }
 
 /**
@@ -147,6 +164,7 @@ int main(int argc, char** argv)
  	 * queues and shared memory before exiting. You may add the cleaning functionality
  	 * in ctrlCSignal().
  	 */
+	signal(SIGINT, ctrlCSignal);
 				
 	/* Initialize */
 	init(shmid, msqid, sharedMemPtr);
@@ -155,6 +173,7 @@ int main(int argc, char** argv)
 	mainLoop();
 
 	/** TODO: Detach from shared memory segment, and deallocate shared memory and message queue (i.e. call cleanup) **/
+	cleanUp(shmid, msqid, sharedMemPtr);
 		
 	return 0;
 }
