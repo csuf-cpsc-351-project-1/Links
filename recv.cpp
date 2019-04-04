@@ -71,9 +71,9 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 void mainLoop()
 {
 	/* The size of the mesage */
-	int msgSize = 1;
+	int msgSize = 0;
 	
-	/* Open the file for writing */
+/* Open the file for writing */
 	FILE* fp = fopen(recvFileName, "w");
 		
 	/* Error checks */
@@ -98,9 +98,14 @@ void mainLoop()
  	 * there is no more data to send
  	 */
 
+	msgrcv(msqid, &sharedMemPtr, sizeof(struct message), SENDER_DATA_TYPE, 0); //receive message from sender
+	msgSize = sizeof(struct message);
+	char* copy_from = shmat(shmid, void( *)0, 0);
+	struct message* copy_to;
+	copy_to = (struct message*)malloc(sizeof (struct message)*1);
+
 	while(msgSize != 0)
-	{	
-		msgrcv(msqid, &sharedMemPtr, sizeof(), SENDER_DATA_TYPE, 0);
+	{
 
 		/* If the sender is not telling us that we are done, then get to work */
 		if(msgSize != 0)
@@ -111,6 +116,10 @@ void mainLoop()
 				perror("fwrite");
 			}
 			
+			memcpy(copy_to, copy_from, msgSize); // copy shared memory pointer to file pointer 
+			for(char c : copy_to) // write to the file
+				fprintf(fp, c);		
+
 			/* TODO: Tell the sender that we are ready for the next file chunk. 
  			 * I.e. send a message of type RECV_DONE_TYPE (the value of size field
  			 * does not matter in this case). 
