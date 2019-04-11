@@ -1,0 +1,10 @@
+Valuable information about message queues, and example code:
+
+http://beej.us/guide/bgipc/html/multi/mq.html
+https://www.tutorialspoint.com/inter_process_communication/inter_process_communication_message_queues.htm
+
+
+
+Valuable information about shared memory, and example code:
+
+http://beej.us/guide/bgipc/html/multi/shm.html
