@@ -42,7 +42,10 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
   const char keyfile[] = "keyfile.txt";
  
   key_t key;
-
+  if ((key = ftok(keyfile, 'a')) == -1) {
+    perror("ftok");
+    exit(1);
+  }
  
   std::cout << "key is: " << key << "\n";
  
@@ -50,17 +53,28 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
      TODO: Get the id of the shared memory segment. T
      he size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
  
+  if ((shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, 0644 | IPC_CREAT)) == -1) {
+    perror("shmget");
+    exit(1);
+  }
  
     /* DONE 
      TODO: Attach to the shared memory */
  
   sharedMemPtr = shmat(shmid, (void *)0, 0);
-
+  if (sharedMemPtr == (char*)(-1)) {
+    perror("shmat");
+    exit(1);
+  }
  
     /* DONE 
      TODO: Attach to the message queue */
  
-
+  if ((msqid = msgget(key, 0644 | IPC_CREAT)) == -1) {
+    perror("msgget");
+    exit(1);
+  }
+ 
   std::cout << "my msqid: " << msqid << "\n";
   std::cout << "my shmid: " << shmid << "\n";
    
@@ -102,6 +116,12 @@ void send(const char* fileName)
     /* A buffer to store message received from the receiver. */
     message* recMsg = new message();
  
+    /* Was the file open? */
+    if(!fp)
+    {
+        perror("fopen");
+        exit(-1);
+    }
     /* Read the whole file */
    
     while (true)
@@ -110,12 +130,22 @@ void send(const char* fileName)
          * fread will return how many bytes it has actually read (since the last chunk may be less
          * than SHARED_MEMORY_CHUNK_SIZE).
          */
+    if ((sndMsg->size = fread(sharedMemPtr, sizeof(char), SHARED_MEMORY_CHUNK_SIZE, fp)) < 0)
+    {
+      perror("fread");
+      exit(-1);
+    }
  
     /* TODO: Send a message to the receiver telling him that the data is ready 
          * (message of type SENDER_DATA_TYPE) 
          */
      
     sndMsg->mtype = SENDER_DATA_TYPE;
+    if ((msgsnd(msqid, sndMsg, sndMsg->size, 0)) < 0)
+    {
+      perror("msgsnd");
+      exit(-1);
+    }
     std::cout << "I've sent a message of chunk size: " << sndMsg->size << "\n";
      
     /* DONE
@@ -124,6 +154,11 @@ void send(const char* fileName)
          */
  
     std::cout << "I'm waiting to receive confirmation now.\n";
+    if ((msgrcv(msqid, recMsg, 0, RECV_DONE_TYPE, 0)) < 0)
+    {
+      perror("msgrcv");
+      exit(-1);
+    }
     std::cout << "I received the confirmation message.\n";
     if (feof(fp))
       break;
@@ -137,7 +172,11 @@ void send(const char* fileName)
  
   sndMsg->mtype = SENDER_DATA_TYPE;
   sndMsg->size = 0;
-
+  if ((msgsnd(msqid, sndMsg, 0, 0)) < 0)
+  {
+    perror("msgsnd");
+    exit(-1);
+  }
   std::cout << "I've sent my closing message.\n";
  
     /* Close the file */
