@@ -258,3 +258,6 @@ int main(int argc, char** argv)
   ** TODO: Detach from shared memory segment, and deallocate shared memory and 
   ** message queue (i.e. call cleanup) 
   */
+  recCleanUp(shmid, msqid, sharedMemPtr);
+    return 0;
+}
