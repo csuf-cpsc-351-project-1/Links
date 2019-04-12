@@ -57,7 +57,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	// attach to the shared memory
 	sharedMemPtr = shmat(shmid, (void *)NULL, 0);
 	if (sharedMemPtr == (char*)(-1)) {
-		std::cout << "";
+		std::cout << "An error occurred while attempting to attach to the shared memory.\n";
 		exit(-1);
 	}
 
